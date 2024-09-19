@@ -1,42 +1,86 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"net/http"
 
+	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+)
 
-func main(){
-
-	// var name string  ="andi"
-	// var age uint8 = 30
-	// var isMarried bool = true
-
-	// var fruits = [4]string{"apple", "grape", "banana", "melon"}
-
-// for i, fruit := range fruits {
-//     fmt.Printf("elemen %d : %s\n", i, fruit)
-// 	fmt.Println("element: ", i , fruit)
-// }
-
-var s  = [3]int{1,2,3}
-var a = [2]int{2,3}
-
-fmt.Println(len(s))
-fmt.Println(len(a))
-
-
-	// lastName := new(string)
-	// fmt.Println("Hello")
-	// fmt.Println("name :",name)
-	// fmt.Println("lastName :",lastName)
-	// fmt.Println("lastName :",*lastName)
-	// fmt.Println("age :",age)
-	// fmt.Println("isMarried :",isMarried)
-	// fmt.Println("Buah Kesukaan :",fruits)
-
-	// if isMarried == true{
-	// 	fmt.Println("Andi sudah menikah")
-	// }else {
-	// 	fmt.Println("Andi belum menikah")
-
-	// }
-
+type Example struct {
+    Name string `json:"name" validate:"required"`   
+    Age  int    `json:"age" validate:"required,number"` 
 }
+var validate *validator.Validate
+
+  
+  func main() {
+	router := gin.Default()
+	validate = validator.New()
+
+	router.GET("/example",handlerGetAll)
+	router.GET("/",handlerGet)
+	router.GET("/example/:id",handlerGetById)
+	router.GET("/query",handleQuery)
+	router.POST("/example",postHandler)
+	router.Run() 
+  }
+
+  func handlerGet (ctx *gin.Context){
+	ctx.JSON(http.StatusOK,gin.H{
+		"name":"ical",
+		"age":12,
+	})
+  }
+  func handlerGetAll(ctx *gin.Context){
+	ctx.JSON(http.StatusOK,gin.H{
+		"name":"ical",
+		"age":12,
+	})
+  }
+  func handlerGetById(ctx *gin.Context){
+	id := ctx.Param("id")
+
+	ctx.JSON(http.StatusOK,gin.H{
+		"id":id,
+	})
+
+  }
+  func handleQuery(ctx *gin.Context){
+	biodata := ctx.Query("biodata")
+
+	ctx.JSON(http.StatusOK,gin.H{
+		"biodata":biodata,
+	})
+  }
+
+  func postHandler(ctx *gin.Context){
+	var example Example
+
+	err := ctx.ShouldBindJSON(&example)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	// validation
+
+	err = validate.Struct(example)
+
+	// parsing to JSON
+
+	fmt.Println(ctx.ShouldBindJSON(&example))
+    if err != nil {
+        ctx.JSON(http.StatusBadRequest, gin.H{
+            "error": err.Error(),
+        })
+        return
+    }
+
+	ctx.JSON(http.StatusOK,gin.H{
+		"name":example.Name,
+		"age":example.Age,
+	})
+  }
