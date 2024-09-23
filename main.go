@@ -59,23 +59,29 @@ var validate *validator.Validate
   func postHandler(ctx *gin.Context){
 	var example Example
 
-	err := ctx.ShouldBindJSON(&example)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	// validation
-
-	err = validate.Struct(example)
 
 	// parsing to JSON
 
-	fmt.Println(ctx.ShouldBindJSON(&example))
+	err := ctx.ShouldBindJSON(&example)
+
+	if err != nil {
+		log.Fatal(err)
+		
+		return
+	}
+	
+	
+	// validation
+	err = validate.Struct(example)
+
+
+
     if err != nil {
-        ctx.JSON(http.StatusBadRequest, gin.H{
-            "error": err.Error(),
-        })
+		for _,e := range err.(validator.ValidationErrors){
+			errorMessage := fmt.Sprintf("Error on field %s,condition : %s",e.Field(), e.ActualTag())
+
+        ctx.JSON(http.StatusBadRequest, errorMessage)
+		}
         return
     }
 
