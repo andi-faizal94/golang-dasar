@@ -1,92 +1,30 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
+	"golang-dasar/handler"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator"
+	// "github.com/go-playground/validator"
 )
 
-type Example struct {
-    Name string `json:"name" validate:"required"`   
-    Age  int    `json:"age" validate:"required,number"` 
-}
 var validate *validator.Validate
 
   
   func main() {
 	router := gin.Default()
 	validate = validator.New()
+	v1 := router.Group("/v1")
+	handler.InitValidator(validate)
 
-	router.GET("/example",handlerGetAll)
-	router.GET("/",handlerGet)
-	router.GET("/example/:id",handlerGetById)
-	router.GET("/query",handleQuery)
-	router.POST("/example",postHandler)
+
+
+	v1.GET("/example",handler.HandlerGetAll)
+	v1.GET("/",handler.HandlerGet)
+	v1.GET("/example/:id",handler.HandlerGetById)
+	v1.GET("/query",handler.HandleQuery)
+	v1.POST("/example",handler.PostHandler)
 	router.Run() 
   }
 
-  func handlerGet (ctx *gin.Context){
-	ctx.JSON(http.StatusOK,gin.H{
-		"name":"ical",
-		"age":12,
-	})
-  }
-  func handlerGetAll(ctx *gin.Context){
-	ctx.JSON(http.StatusOK,gin.H{
-		"name":"ical",
-		"age":12,
-	})
-  }
-  func handlerGetById(ctx *gin.Context){
-	id := ctx.Param("id")
-
-	ctx.JSON(http.StatusOK,gin.H{
-		"id":id,
-	})
-
-  }
-  func handleQuery(ctx *gin.Context){
-	biodata := ctx.Query("biodata")
-
-	ctx.JSON(http.StatusOK,gin.H{
-		"biodata":biodata,
-	})
-  }
-
-  func postHandler(ctx *gin.Context){
-	var example Example
-
-
-	// parsing to JSON
-
-	err := ctx.ShouldBindJSON(&example)
-
-	if err != nil {
-		log.Fatal(err)
-		
-		return
-	}
-	
-	
-	// validation
-	err = validate.Struct(example)
-
-
-
-    if err != nil {
-		for _,e := range err.(validator.ValidationErrors){
-			errorMessage := fmt.Sprintf("Error on field %s,condition : %s",e.Field(), e.ActualTag())
-
-        ctx.JSON(http.StatusBadRequest, errorMessage)
-		}
-        return
-    }
-
-	ctx.JSON(http.StatusOK,gin.H{
-		"name":example.Name,
-		"age":example.Age,
-	})
-  }
+  
